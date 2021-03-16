@@ -64,7 +64,7 @@ use sp_core::OpaqueMetadata;
 use sp_staking::SessionIndex;
 use pallet_session::historical as session_historical;
 use frame_system::{EnsureRoot, EnsureOneOf, EnsureSigned};
-use runtime_common::{paras_sudo_wrapper, paras_registrar, xcm_sender, crowdloan, slots};
+use runtime_common::{paras_sudo_wrapper, paras_registrar, xcm_sender, crowdloan, slots, auctions};
 use runtime_parachains::origin as parachains_origin;
 use runtime_parachains::configuration as parachains_configuration;
 use runtime_parachains::shared as parachains_shared;
@@ -220,6 +220,7 @@ construct_runtime! {
 		// Here we begin hacking in the crowdloan pallet
 		Crowdloan: crowdloan::{Module, Call, Storage, Event<T>},
 		Slots: slots::{Module, Call, Storage, Event<T>},
+		Auctions: auctions::{Module, Call, Storage, Event<T>},
 	}
 }
 
@@ -227,58 +228,26 @@ use sp_runtime::DispatchResult;
 use runtime_parachains::paras::ParaGenesisArgs;
 use primitives::v1::HeadData;
 
-pub struct MockRegistrar;
-impl slots::Registrar<AccountId> for MockRegistrar {
-	fn new_id() -> ParaId {
-		//TODO have a storage item that counts up
-		// I think there is a RefCell example in the solts pallet tests.
-		1000.into()
-	}
-
-	fn head_data_size_allowed(head_data_size: u32) -> bool {
-		true
-	}
-
-	fn code_size_allowed(code_size: u32) -> bool {
-		true
-	}
-
-	fn register_para(
-		id: ParaId,
-		_parachain: bool,
-		validation_code: ValidationCode,
-		genesis_head: HeadData,
-	) -> DispatchResult {
-		// Copied from paras_registrar and sudo_paras_wrapper
-
-		// ensure!(validation_code.0.starts_with(WASM_MAGIC), Error::<T>::DefinitelyNotWasm);
-
-		let genesis = ParaGenesisArgs {
-			genesis_head,
-			validation_code,
-			parachain: true,
-		};
-
-		runtime_parachains::schedule_para_initialize::<Runtime>(id, genesis).map_err(|_| "Error::<T>::ParaAlreadyExists".into())
-	}
-
-	fn deregister_para(id: ParaId) -> DispatchResult {
-		todo!()
-	}
-}
-
 parameter_types!{
 	pub const EndingPeriod: BlockNumber = 1 * MINUTES;
 	pub const LeasePeriod: BlockNumber = 10 * MINUTES;
 }
 
+impl auctions::Config for Runtime {
+	type Event = Event;
+	type Leaser = Slots;
+	type EndingPeriod = EndingPeriod;
+	type Randomness = pallet_babe::RandomnessFromOneEpochAgo<Runtime>;
+	type InitiateOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = auctions::TestWeightInfo;
+}
+
 impl slots::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type Parachains = MockRegistrar;
-	type EndingPeriod = EndingPeriod;
+	type Registrar = Registrar;
 	type LeasePeriod = LeasePeriod;
-	type Randomness = Babe;
+	type WeightInfo = slots::TestWeightInfo;
 }
 
 parameter_types!{
@@ -298,6 +267,9 @@ impl crowdloan::Config for Runtime {
 	type RetirementPeriod = RetirementPeriod;
 	type OrphanedFunds = ();
 	type RemoveKeysLimit = RemoveKeysLimit;
+	type Registrar = Registrar;
+	type Auctioneer = Auctions;
+	type WeightInfo = crowdloan::TestWeightInfo;
 }
 
 pub struct BaseFilter;
