@@ -14,6 +14,7 @@ frame-support = { default-features = false, git = "https://github.com/paritytech
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.20" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.20" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.20" }
+sp-io = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.20" }
 xcm-executor = { path = "../xcm-executor", default-features = false, features = ["runtime-benchmarks"] }
 frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.20" }
 xcm = { path = "..", default-features = false, features = ["runtime-benchmarks"] }
@@ -23,7 +24,6 @@ log = "0.4.16"
 pallet-balances = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.20" }
 pallet-assets = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.20" }
 sp-core = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.20" }
-sp-io = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.20" }
 sp-tracing = { git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.20" }
 xcm-builder = { path = "../xcm-builder" }
 xcm = { path = ".." }
@@ -40,6 +40,8 @@ std = [
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
+	"sp-io/std",
 	"sp-runtime/std",
-	"sp-std/std"
+	"sp-std/std",
+	"xcm-executor/std"
 ]
